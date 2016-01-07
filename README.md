@@ -1,2 +1,2 @@
 # cakephp-Openweathermap
-Plugins for CakePHP and Openweathermap (WIP)
+Plugin for CakePHP and Openweathermap (WIP)
