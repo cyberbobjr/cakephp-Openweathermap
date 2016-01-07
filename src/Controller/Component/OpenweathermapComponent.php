@@ -13,7 +13,7 @@ use Cake\Network\Http\Client;
 class OpenweathermapComponent extends Component
 {
     /**
-     * api.openweathermap.org/data/2.5/forecast?lat=48.900552&lon=2.25929&APPID=1ac998025e1b44ea56a8af2ee5e965dd&units=metric&lang=fr
+     * api.openweathermap.org/data/2.5/forecast?lat=48.900552&lon=2.25929&APPID=xxx&units=metric&lang=fr
      */
 
     /**
