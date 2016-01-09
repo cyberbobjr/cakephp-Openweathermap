@@ -185,9 +185,10 @@ class OpenweathermapComponent extends Component
         // Units parameter (C° of F°)
         if (is_null($vars['units'])) {
             $params['units'] = $this->_defaultConfig['units'];
+        } else {
+            $params['units'] = $vars['units'];
         }
-        $params['units'] = $vars['units'];
-
+        
         // Language parameter
         if (is_null($vars['lang'])) {
             $params['lang'] = $this->_defaultConfig['lang'];
