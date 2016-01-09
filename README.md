@@ -1,4 +1,4 @@
-# Openweathermap plugin for CakePHP
+# Openweathermap plugin for CakePHP v3
 
 ## Installation (in progress)
 
