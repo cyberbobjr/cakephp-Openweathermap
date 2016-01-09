@@ -72,6 +72,8 @@ public function main()
 
 Everytime you fetch weatherdata, the component check if the request is more than 6 hours old, otherwise the component will return weatherdata from database instead of updating it.
 
+<b>Don't use XML or HTML format, it's not implemented for the moment</b>
+
 ## Future
 I'm coding a Weather Helper which can display icon (css) or image from weather information.
 
