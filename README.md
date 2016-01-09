@@ -72,6 +72,10 @@ public function main()
 
 Everytime you fetch weatherdata, the component check if the request is more than 6 hours old, otherwise the component will return weatherdata from cache.
 
+## Future
+I'm coding a Weather Helper which can display icon (css) or image from weather information.
+
+## End
 Sorry for my very bad english (i'm a french guy), if you see some errors, please do a pull request. If you want more informations, you can ask your questions into the issues section of this page.
 
 you can send me a mail at cyberbobjr(at)yahoo(dot)com
