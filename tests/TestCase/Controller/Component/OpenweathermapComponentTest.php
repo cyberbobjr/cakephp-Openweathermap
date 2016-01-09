@@ -45,9 +45,24 @@ class OpenweathermapComponentTest extends TestCase
         $this->markTestIncomplete('Not implemented yet.');
     }
 
+    /**
+     * Test the getWeatherByGeoloc function
+     */
     public function testGetWeatherByGeoloc()
     {
         $data = $this->Openweathermap->getWeatherByGeoloc(48.86189, 2.112527);
         $this->assertEquals(1, $data['success']);
+        $this->assertEquals("Louveciennes", $data['data']['city']['name']);
+    }
+
+    /**
+     * Test the getWeatherByCityName function
+     */
+    public function testGetWeatherByCityName()
+    {
+        $data = $this->Openweathermap->getWeatherByCityName('courbevoie', 'fr');
+        $this->assertEquals(1, $data['success']);
+        $this->assertEquals("2.25666", $data['data']['city']['coord']['lon']);
+        $this->assertEquals("48.896721", $data['data']['city']['coord']['lat']);
     }
 }

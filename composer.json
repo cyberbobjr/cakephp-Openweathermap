@@ -1,5 +1,5 @@
 {
-    "name": "cyberbobjr/Openweathermap",
+    "name": "your-name-here/Openweathermap",
     "description": "Openweathermap plugin for CakePHP",
     "type": "cakephp-plugin",
     "require": {

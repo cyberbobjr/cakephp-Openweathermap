@@ -5,15 +5,20 @@ namespace Openweathermap\Controller\Component;
 use Cake\Controller\Component;
 use Cake\Core\Exception\Exception;
 use Cake\Network\Http\Client;
+use Cake\ORM\TableRegistry;
+use Openweathermap\Model\Table\WeatherdatasTable;
+use Openweathermap\Model\Table\WeathersitesTable;
 
 /**
  * Openweathermap component
  * Component for getting weather forecast from Openweathermap.org
+ * @property WeatherdatasTable $Weatherdatas
+ * @property WeathersitesTable $Weathersites
  */
 class OpenweathermapComponent extends Component
 {
     /**
-     * api.openweathermap.org/data/2.5/forecast?lat=48.900552&lon=2.25929&APPID=xxx&units=metric&lang=fr
+     * api.openweathermap.org/data/2.5/forecast?lat=48.900552&lon=2.25929&APPID=1ac998025e1b44ea56a8af2ee5e965dd&units=metric&lang=fr
      */
 
     /**
@@ -68,7 +73,8 @@ class OpenweathermapComponent extends Component
 
     /**
      * Default configuration.
-     *
+     * define the default configuration for the Openweathermap API, configuration can be modified during the plugin
+     * loading inside bootstrap.php core of the main App only the API key is not provided
      * @var array
      */
     protected $_defaultConfig = [
@@ -78,7 +84,6 @@ class OpenweathermapComponent extends Component
         'mode'  => 'json',
         'units' => 'metric',
         'lang'  => 'fr',
-        //
     ];
 
     /**
@@ -111,6 +116,7 @@ class OpenweathermapComponent extends Component
             return ['success' => FALSE,
                     'error'   => __('Invalid coordinates')];
         }
+        // Build an array of parameters
         $params = $this->_buildParams('cityId', ['units' => $units,
                                                  'lang'  => $lang,
                                                  'city'  => $city_id]);
@@ -134,6 +140,7 @@ class OpenweathermapComponent extends Component
             return ['success' => FALSE,
                     'error'   => __('Invalid coordinates')];
         }
+        // Build an array of parameters
         $params = $this->_buildParams('cityName', ['units' => $units,
                                                    'lang'  => $lang,
                                                    'city'  => join(',', [$city_name,
@@ -157,6 +164,7 @@ class OpenweathermapComponent extends Component
             return ['success' => FALSE,
                     'error'   => __('Coordinates not valid')];
         }
+        // Build an array of parameters
         $params = $this->_buildParams('geoloc', ['units' => $units,
                                                  'lang'  => $lang,
                                                  'lat'   => $lat,
@@ -174,17 +182,20 @@ class OpenweathermapComponent extends Component
     {
         $params['APPID'] = $this->_defaultConfig['key'];
 
+        // Units parameter (C° of F°)
         if (is_null($vars['units'])) {
             $params['units'] = $this->_defaultConfig['units'];
         }
         $params['units'] = $vars['units'];
 
+        // Language parameter
         if (is_null($vars['lang'])) {
             $params['lang'] = $this->_defaultConfig['lang'];
         }
 
-        $params['units'] = $vars['units'];
-
+        /**
+         * made custom query switch from the request type (geoloc, cityId, cityName)
+         */
         switch ($type) {
             case 'geoloc' :
                 $params['lat'] = $vars['lat'];
@@ -207,34 +218,115 @@ class OpenweathermapComponent extends Component
      * @param string $type   Type of request (forecast, current)
      * @return array|mixed
      */
-    private function _fetchData($params, $mode, $type = 'forecast')
+    private function _fetchData($params, $mode = NULL, $type = 'forecast')
     {
-        if (is_null($mode)) {
-            $mode = $this->_defaultConfig['mode'];
-        }
-        $client         = new Client();
-        $params['mode'] = $mode;
-        $data           = $client->get($this->_defaultConfig['url'][$type], $params);
+        try {
+            // if $mode is null, we get the default config mode
+            if (is_null($mode)) {
+                $mode = $this->_defaultConfig['mode'];
+            }
+            // create HTTP Client
+            $client         = new Client();
+            $params['mode'] = $mode;
+            // grab the info
+            $data = $client->get($this->_defaultConfig['url'][$type], $params);
 
-        if (!$data->isOk()) {
-            return ['success' => FALSE,
-                    'error'   => __('Fetching error from Openweathermap')];
+            if (!$data->isOk()) {
+                // if the grabing is a failure, we return an error
+                return ['success' => FALSE,
+                        'error'   => __('Fetching error from Openweathermap')];
+            } else {
+                // if grabing is a success, we parse the result
+                switch ($mode) {
+                    case 'json' :
+                        $response = ['success' => TRUE,
+                                     'data'    => $data->json];
+                        break;
+                    case 'xml' :
+                        $response = ['success' => TRUE,
+                                     'data'    => $data->xml];
+                        break;
+                    case 'html':
+                        $response = ['success' => TRUE,
+                                     'data'    => $data->body()];
+                        break;
+                }
+
+                // we save weather informations into database
+                $this->_saveData($data->json);
+            }
+        } catch (\Exception $ex) {
+            $response = ['success' => FALSE,
+                         'error'   => $ex->getMessage()];
         }
-        switch ($mode) {
-            case 'json' :
-                return ['success' => TRUE,
-                        'data'    => $data->json];
-            case 'xml' :
-                return ['success' => TRUE,
-                        'data'    => $data->xml];
-            case 'html':
-                return ['success' => TRUE,
-                        'data'    => $data->body()];
-        }
+
+        return $response;
     }
 
-    public function parseDatas($data)
+    /**
+     * Save the weather response from the Openweathermap API
+     * @param array $weatherdatas Array with weather datas in JSON format
+     * @return bool TRUE if success, FALSE if error
+     */
+    private function _saveData($weatherdatas)
     {
+        $this->Weathersites = TableRegistry::get('Weathersites');
+        $this->Weatherdatas = TableRegistry::get('Weatherdatas');
+        // we get the site
+        $site = $weatherdatas['city'];
+        // we check if site is already in the base
+        if ($this->Weathersites->exists(['id' => $site['id']])) {
+            $site = $this->Weathersites->get($site['id']);
+        } else {
+            // if not, we create it
+            $site = $this->Weathersites->newEntity(['id'        => $site['id'],
+                                                    'name'      => $site['name'],
+                                                    'longitude' => $site['coord']['lat'],
+                                                    'latitude'  => $site['coord']['lon'],
+                                                    'country'   => $site['country'],
+                                                   ]);
+            $site = $this->Weathersites->save($site);
+        }
+        // then we parse all the weather data
+        foreach ($weatherdatas['list'] as $list) {
+            // we check if the weatherdata is already in the base
 
+            $weatherdata = $this->Weatherdatas->find()
+                                              ->where(['weathersite_id'     => $site->id,
+                                                       'UNIX_TIMESTAMP(dt)' => $list['dt']])
+                                              ->first();
+            if (($weatherdata && ($weatherdata->created < (new \DateTime("now"))->sub(new \DateInterval('PT3H')))) || (!$weatherdata)) {
+                $data = ['temp'               => $list['main']['temp'],
+                         'temp_min'           => $list['main']['temp_min'],
+                         'temp_max'           => $list['main']['temp_max'],
+                         'pressure'           => $list['main']['pressure'],
+                         'sea_level'          => $list['main']['sea_level'],
+                         'grnd_level'         => $list['main']['grnd_level'],
+                         'humidity'           => $list['main']['humidity'],
+                         'temp_kf'            => $list['main']['temp_kf'],
+                         'weatherid'          => $list['weather'][0]['id'],
+                         'weathermain'        => $list['weather'][0]['main'],
+                         'weatherdescription' => $list['weather'][0]['description'],
+                         'weathericon'        => $list['weather'][0]['icon'],
+                         'clouds'             => $list['clouds']['all'],
+                         'windspeed'          => $list['wind']['speed'],
+                         'winddeg'            => $list['wind']['deg'],
+                         'rain3'              => isset($list['rain']['3h']) ? $list['rain']['3h'] : NULL,
+                         'snow3'              => isset($list['snow']['3h']) ? $list['snow']['3h'] : NULL,
+                ];
+                // if the weatherdata is already in the base AND the last query is more than 6 hours, we update the data with the latest grab OR if the weatherdata not exist
+                if ($weatherdata) {
+                    // we update weatherdata
+                    $weatherdata = $this->Weatherdatas->patchEntity($weatherdata, $data);
+                } else {
+                    $data = array_merge($data, ['dt'             => date_create_from_format('U', $list['dt']),
+                                                'weathersite_id' => $site->id]);
+                    // we create weatherdata
+                    $weatherdata = $this->Weatherdatas->newEntity($data);
+                }
+                $this->Weatherdatas->save($weatherdata);
+            }
+        }
+        return TRUE;
     }
 }

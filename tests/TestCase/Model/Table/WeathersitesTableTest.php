@@ -3,12 +3,12 @@ namespace Openweathermap\Test\TestCase\Model\Table;
 
 use Cake\ORM\TableRegistry;
 use Cake\TestSuite\TestCase;
-use Openweathermap\Model\Table\WeatherdatasTable;
+use Openweathermap\Model\Table\WeathersitesTable;
 
 /**
- * Openweathermap\Model\Table\WeatherdatasTable Test Case
+ * Openweathermap\Model\Table\WeathersitesTable Test Case
  */
-class WeatherdatasTableTest extends TestCase
+class WeathersitesTableTest extends TestCase
 {
 
     /**
@@ -17,8 +17,8 @@ class WeatherdatasTableTest extends TestCase
      * @var array
      */
     public $fixtures = [
-        'plugin.openweathermap.weatherdatas',
-        'plugin.openweathermap.weathersites'
+        'plugin.openweathermap.weathersites',
+        'plugin.openweathermap.weatherdatas'
     ];
 
     /**
@@ -29,8 +29,8 @@ class WeatherdatasTableTest extends TestCase
     public function setUp()
     {
         parent::setUp();
-        $config = TableRegistry::exists('Weatherdatas') ? [] : ['className' => 'Openweathermap\Model\Table\WeatherdatasTable'];
-        $this->Weatherdatas = TableRegistry::get('Weatherdatas', $config);
+        $config = TableRegistry::exists('Weathersites') ? [] : ['className' => 'Openweathermap\Model\Table\WeathersitesTable'];
+        $this->Weathersites = TableRegistry::get('Weathersites', $config);
     }
 
     /**
@@ -40,7 +40,7 @@ class WeatherdatasTableTest extends TestCase
      */
     public function tearDown()
     {
-        unset($this->Weatherdatas);
+        unset($this->Weathersites);
 
         parent::tearDown();
     }
@@ -61,16 +61,6 @@ class WeatherdatasTableTest extends TestCase
      * @return void
      */
     public function testValidationDefault()
-    {
-        $this->markTestIncomplete('Not implemented yet.');
-    }
-
-    /**
-     * Test buildRules method
-     *
-     * @return void
-     */
-    public function testBuildRules()
     {
         $this->markTestIncomplete('Not implemented yet.');
     }

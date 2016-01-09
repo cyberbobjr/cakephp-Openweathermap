@@ -10,6 +10,7 @@ use Openweathermap\Model\Entity\Weatherdata;
 /**
  * Weatherdatas Model
  *
+ * @property \Cake\ORM\Association\BelongsTo $Weathersites
  */
 class WeatherdatasTable extends Table
 {
@@ -25,11 +26,16 @@ class WeatherdatasTable extends Table
         parent::initialize($config);
 
         $this->table('weatherdatas');
-        $this->displayField('id');
+        $this->displayField('weatherdescription');
         $this->primaryKey('id');
 
         $this->addBehavior('Timestamp');
 
+        $this->belongsTo('Weathersites', [
+            'foreignKey' => 'weathersite_id',
+            'joinType' => 'INNER',
+            'className' => 'Openweathermap.Weathersites'
+        ]);
     }
 
     /**
@@ -45,22 +51,88 @@ class WeatherdatasTable extends Table
             ->allowEmpty('id', 'create');
 
         $validator
-            ->requirePresence('location', 'create')
-            ->notEmpty('location');
+            ->add('dt', 'valid', ['rule' => 'datetime'])
+            ->requirePresence('dt', 'create')
+            ->notEmpty('dt');
 
         $validator
-            ->requirePresence('loc_type', 'create')
-            ->notEmpty('loc_type');
+            ->add('temp', 'valid', ['rule' => 'numeric'])
+            ->allowEmpty('temp');
 
         $validator
-            ->requirePresence('loc_value', 'create')
-            ->notEmpty('loc_value');
+            ->add('temp_min', 'valid', ['rule' => 'numeric'])
+            ->allowEmpty('temp_min');
 
         $validator
-            ->requirePresence('datas', 'create')
-            ->notEmpty('datas');
+            ->add('temp_max', 'valid', ['rule' => 'numeric'])
+            ->allowEmpty('temp_max');
+
+        $validator
+            ->add('pressure', 'valid', ['rule' => 'numeric'])
+            ->allowEmpty('pressure');
+
+        $validator
+            ->add('sea_level', 'valid', ['rule' => 'numeric'])
+            ->allowEmpty('sea_level');
+
+        $validator
+            ->add('grnd_level', 'valid', ['rule' => 'numeric'])
+            ->allowEmpty('grnd_level');
+
+        $validator
+            ->add('humidity', 'valid', ['rule' => 'numeric'])
+            ->allowEmpty('humidity');
+
+        $validator
+            ->add('temp_kf', 'valid', ['rule' => 'numeric'])
+            ->allowEmpty('temp_kf');
+
+        $validator
+            ->add('weatherid', 'valid', ['rule' => 'numeric'])
+            ->allowEmpty('weatherid');
+
+        $validator
+            ->allowEmpty('weathermain');
+
+        $validator
+            ->allowEmpty('weatherdescription');
+
+        $validator
+            ->allowEmpty('weathericon');
+
+        $validator
+            ->add('clouds', 'valid', ['rule' => 'numeric'])
+            ->allowEmpty('clouds');
+
+        $validator
+            ->add('windspeed', 'valid', ['rule' => 'numeric'])
+            ->allowEmpty('windspeed');
+
+        $validator
+            ->add('winddeg', 'valid', ['rule' => 'numeric'])
+            ->allowEmpty('winddeg');
+
+        $validator
+            ->add('rain3', 'valid', ['rule' => 'numeric'])
+            ->allowEmpty('rain3');
+
+        $validator
+            ->add('snow3', 'valid', ['rule' => 'numeric'])
+            ->allowEmpty('snow3');
 
         return $validator;
     }
 
+    /**
+     * Returns a rules checker object that will be used for validating
+     * application integrity.
+     *
+     * @param \Cake\ORM\RulesChecker $rules The rules object to be modified.
+     * @return \Cake\ORM\RulesChecker
+     */
+    public function buildRules(RulesChecker $rules)
+    {
+        $rules->add($rules->existsIn(['weathersite_id'], 'Weathersites'));
+        return $rules;
+    }
 }
